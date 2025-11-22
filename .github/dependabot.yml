@@ -1,0 +1,16 @@
+version: 2
+
+enable-beta-ecosystems: true # Required for OpenTofu
+
+updates:
+  - package-ecosystem: "opentofu"
+    directories:
+      - "/opentofu-infra/**/*"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "terraform"
+    directories:
+      - "/terraform-infra/**/*"
+    schedule:
+      interval: "daily"
