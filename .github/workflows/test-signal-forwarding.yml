@@ -1,0 +1,61 @@
+name: Test Signal Forwarding (setup-opentofu PR #93)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-signal-forwarding:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup OpenTofu (PR branch)
+        uses: opentofu/setup-opentofu@wrapper-signal
+
+      - name: Create a long-running tofu config
+        run: |
+          mkdir -p /tmp/tofu-test && cd /tmp/tofu-test
+          cat > main.tf << 'EOF'
+          terraform {
+            required_providers {
+              time = {
+                source  = "hashicorp/time"
+                version = "0.13.1"
+              }
+            }
+          }
+
+          resource "time_sleep" "wait" {
+            create_duration = "120s"
+          }
+          EOF
+
+      - name: Init OpenTofu
+        working-directory: /tmp/tofu-test
+        run: tofu init
+
+      - name: Run tofu apply and send SIGTERM to wrapper
+        working-directory: /tmp/tofu-test
+        run: |
+          # Start tofu apply in the background via the wrapper
+          tofu apply -auto-approve &
+          TOFU_PID=$!
+
+          # Give tofu time to start the apply and begin the sleep resource
+          sleep 10
+
+          echo "Sending SIGTERM to wrapper process (PID: $TOFU_PID)..."
+          kill -SIGTERM $TOFU_PID
+
+          # Wait for the process to exit
+          wait $TOFU_PID
+          EXIT_CODE=$?
+          echo "Wrapper exited with code: $EXIT_CODE"
+
+          # Verify tofu is no longer running (signal was forwarded)
+          sleep 2
+          if pgrep -f "tofu" > /dev/null 2>&1; then
+            echo "FAIL: tofu process is still running after SIGTERM!"
+            pkill -f "tofu" || true
+            exit 1
+          else
+            echo "PASS: tofu process exited after SIGTERM was forwarded"
+          fi
