@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup OpenTofu (PR branch)
-        uses: opentofu/setup-opentofu@wrapper-signal
+        uses: opentofu/setup-opentofu@latest
 
       - name: Create a long-running tofu config
         run: |
