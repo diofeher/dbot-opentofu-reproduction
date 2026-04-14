@@ -1,0 +1,46 @@
+name: Test Checksums (setup-opentofu PR #107)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-no-checksums:
+    name: "No checksums (backwards compat)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup OpenTofu without checksums
+        uses: opentofu/setup-opentofu@feature/checksums
+        with:
+          tofu_version: 1.9.0
+
+      - name: Verify tofu works
+        run: tofu version
+
+  test-correct-checksum:
+    name: "Correct checksum"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup OpenTofu with correct checksum
+        uses: opentofu/setup-opentofu@feature/checksums
+        with:
+          tofu_version: 1.9.0
+          checksums: |
+            638dd3fb9ecfa6fd9f54a0024b195b12b407c51ccee6f83b18a75a8be79f8214
+
+      - name: Verify tofu works
+        run: tofu version
+
+  test-multiple-checksums:
+    name: "Multiple checksums (one correct)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup OpenTofu with multiple checksums
+        uses: opentofu/setup-opentofu@feature/checksums
+        with:
+          tofu_version: 1.9.0
+          checksums: |
+            190d74b1d834c5daec8d5f9b1ea97945c91a1188b6899f219967fbd39ef28e79
+            638dd3fb9ecfa6fd9f54a0024b195b12b407c51ccee6f83b18a75a8be79f8214
+
+      - name: Verify tofu works
+        run: tofu version
