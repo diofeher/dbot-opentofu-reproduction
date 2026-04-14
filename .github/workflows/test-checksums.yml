@@ -44,3 +44,25 @@ jobs:
 
       - name: Verify tofu works
         run: tofu version
+
+  test-wrong-checksum:
+    name: "Wrong checksum (should fail)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup OpenTofu with wrong checksum
+        id: setup
+        uses: opentofu/setup-opentofu@d700c3d4d290a0fef89ade68296c9c77108ef525
+        continue-on-error: true
+        with:
+          tofu_version: 1.9.0
+          checksums: |
+            190d74b1d834c5daec8d5f9b1ea97945c91a1188b6899f219967fbd39ef28e79
+
+      - name: Verify setup failed
+        run: |
+          if [ "${{ steps.setup.outcome }}" = "failure" ]; then
+            echo "PASS: Setup correctly failed with wrong checksum"
+          else
+            echo "FAIL: Setup should have failed with wrong checksum"
+            exit 1
+          fi
